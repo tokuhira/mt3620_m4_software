@@ -33,7 +33,7 @@
  * MEDIATEK SOFTWARE AT ISSUE.
  */
 
-#include <hdl_gpt.h>
+#include "hdl_gpt.h"
 
 /* GPT0 & GPT1: down + irq (1k, 32k) */
 #define GPT_ISR				0x000
@@ -62,6 +62,7 @@
 
 /* GPT3: up + irq (1M) */
 #define GPT3_CTRL			(0x050)
+#define GPT3_CLKSRC_26M			(26000000)
 #define GPT3_OSC_CNT_1US(tick)		(((tick) & 0x3f) << 16)
 #define GPT3_OSC_CNT_MASK		GPT3_OSC_CNT_1US(0x3f)
 #define GPT3_ICLR			(0x0001 << 15)
@@ -81,14 +82,14 @@
 
 /** error return: need to be consistent with mhal_gpt.h */
 /** Invalid argument. It means the input pointer is NULL */
-#define EPTR		1
+#define GPT_EPTR		1
 /** Invalid argument. It means the HW unit does not exist. */
-#define ENODEV		2
+#define GPT_ENODEV		2
 /**
   * Permission denied.
   * It means the configuration is not supported by HW design.
   */
-#define EACCES		3
+#define GPT_EACCES		3
 
 #define gpt_read_reg(__base, __offset)		osai_readl((__base) + \
 							(__offset))
@@ -127,7 +128,7 @@ int mtk_hdl_gpt_set_compare(void __iomem *gpt_reg_base,
 		return 0;
 	}
 
-	return -EACCES;
+	return -GPT_EACCES;
 }
 
 int mtk_hdl_gpt_config_mode(void __iomem *gpt_reg_base,
@@ -150,7 +151,7 @@ int mtk_hdl_gpt_config_mode(void __iomem *gpt_reg_base,
 			return 0;
 	}
 
-	return -EACCES;
+	return -GPT_EACCES;
 }
 
 int mtk_hdl_gpt_enable_irq(void __iomem *gpt_reg_base,
@@ -165,7 +166,7 @@ int mtk_hdl_gpt_enable_irq(void __iomem *gpt_reg_base,
 		return 0;
 	}
 
-	return -EACCES;
+	return -GPT_EACCES;
 }
 
 int mtk_hdl_gpt_disable_irq(void __iomem *gpt_reg_base,
@@ -181,7 +182,7 @@ int mtk_hdl_gpt_disable_irq(void __iomem *gpt_reg_base,
 		return 0;
 	}
 
-	return -EACCES;
+	return -GPT_EACCES;
 }
 
 int mtk_hdl_gpt_get_irq_status(void __iomem *gpt_reg_base,
@@ -202,7 +203,7 @@ int mtk_hdl_gpt_get_irq_status(void __iomem *gpt_reg_base,
 
 	*int_sta = 0;
 
-	return -EACCES;
+	return -GPT_EACCES;
 }
 
 int mtk_hdl_gpt_clear_irq_status(void __iomem *gpt_reg_base,
@@ -224,7 +225,7 @@ int mtk_hdl_gpt_clear_irq_status(void __iomem *gpt_reg_base,
 		_mtk_hdl_gpt_cm4_reg_write(gpt_reg_base, GPT3_CTRL,
 					   gpt_status & (~GPT3_ICLR));
 	} else
-		return -EACCES;
+		return -GPT_EACCES;
 
 	return 0;
 }
@@ -279,25 +280,6 @@ u32 mtk_hdl_gpt_get_count(void __iomem *gpt_reg_base,
 	return _mtk_hdl_gpt_cm4_reg_read(gpt_reg_base, GPT_CNT_LIST[timer_id]);
 }
 
-
-/* A wake method to get xtal frequeny. It comes from top.c: top_xtal_init() */
-static unsigned int _mtk_hdl_gpt_xtal_freq_get(void)
-{
-	unsigned int xtal_strap;
-
-	xtal_strap = (*((volatile unsigned int *)(0x30090190)));
-	switch (xtal_strap & 0x03) {
-	case 0:
-		return 20000000;  /* 20Mhz */
-	case 1:
-		return 40000000;  /* 40Mhz */
-	case 2:
-		return 26000000;  /* 26Mhz */
-	default: /* 3 */
-		return 52000000;  /* 52Mhz */
-	}
-}
-
 void mtk_hdl_gpt_config_clk(void __iomem *gpt_reg_base,
 			    u8 timer_id,
 			    u8 clk_src)
@@ -331,7 +313,7 @@ void mtk_hdl_gpt_config_clk(void __iomem *gpt_reg_base,
 						GPT_CTRL_LIST[timer_id]) &
 						(~GPT3_OSC_CNT_MASK);
 
-		osc_cnt_1us = (_mtk_hdl_gpt_xtal_freq_get() / 1000000) - 1;
+		osc_cnt_1us = (GPT3_CLKSRC_26M / 1000000) - 1;
 
 		_mtk_hdl_gpt_cm4_reg_write(gpt_reg_base,
 				GPT_CTRL_LIST[timer_id],

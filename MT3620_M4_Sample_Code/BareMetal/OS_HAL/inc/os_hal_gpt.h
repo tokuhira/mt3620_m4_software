@@ -36,96 +36,108 @@
 #ifndef __OS_HAL_GPT_H__
 #define __OS_HAL_GPT_H__
 
-#include "mhal_osai.h"
 #include "mhal_gpt.h"
 
-enum gpt_timer_id {
-	OS_HAL_GPT0 = 0,
-	OS_HAL_GPT1,
-	OS_HAL_GPT2,
-	OS_HAL_GPT3,
-	OS_HAL_GPT4,
+/**
+ * @brief  GPT timer ID enum definition.\n
+ *  It can be used to specify the timer ID of the current GPT device unit.\n
+ *  Follow mhal_gpt.h.
+ */
+enum {
+	OS_HAL_GPT0 = GPT0,
+	OS_HAL_GPT1 = GPT1,
+	OS_HAL_GPT2 = GPT2,
+	OS_HAL_GPT3 = GPT3,
+	OS_HAL_GPT4 = GPT4,
 	OS_HAL_GPT_MAX_NUM
-};
+} GPT_ID;
 
+/**
+ * @brief  The definition of GPT user interrupt handle structure.\n
+ *  	It can be used to register GPT user interrupt handle by
+ *	mtk_os_hal_gpt_config().
+ */
 struct os_gpt_int {
+	/** The user interrupt handle of GPT. */
 	void (*gpt_cb_hdl)(void *);
+	/** The pointer of GPT interrupt callback data, which will be passed
+	  * into user interrupt handle.
+	  */
 	void *gpt_cb_data;
 };
 
 /**
  * @brief  Start GPT timer count.
- *  @param [in] timer_id: GPT timer id
+ *  @param [in] timer_id : GPT timer id
  *  @return
  *	0: Success.\n
  *	negative: Failure.\n
  */
-int mtk_os_hal_gpt_start(unsigned char timer_id);
+int mtk_os_hal_gpt_start(enum gpt_num timer_id);
 
 /**
  * @brief  Stop GPT timer count.
- *  @param [in] timer_id: GPT timer id
+ *  @param [in] timer_id : GPT timer id
  *  @return
  *	0: Success.\n
  *	negative: Failure.\n
  */
-int mtk_os_hal_gpt_stop(unsigned char timer_id);
+int mtk_os_hal_gpt_stop(enum gpt_num timer_id);
 
 /**
  * @brief  Get GPT timer counter value.
- *  @param [in] timer_id: GPT timer id
+ *  @param [in] timer_id : GPT timer id
  *  @return
  *	32bit counter value
  */
-unsigned int mtk_os_hal_gpt_get_cur_count(unsigned char timer_id);
+unsigned int mtk_os_hal_gpt_get_cur_count(enum gpt_num timer_id);
 
 /**
  * @brief  Restart GPT timer count.
- *  @param [in] timer_id: GPT timer id
+ *  @param [in] timer_id : GPT timer id
  *  @return
  *	0: Success.\n
  *	negative: Failure.\n
  */
-int mtk_os_hal_gpt_restart(unsigned char timer_id);
+int mtk_os_hal_gpt_restart(enum gpt_num timer_id);
 
 /**
  * @brief  Reset GPT timer mode (only works for interrupt-based timer).
- *  @param [in] timer_id: GPT timer id
- *  @param [in] count_val: GPT timeout count value
- *  @param [in] auto_repeat: open repeat mode (only works for GPT0 & GPT1)
+ *  @param [in] timer_id : GPT timer id
+ *  @param [in] count_val : GPT timeout count value
+ *  @param [in] auto_repeat : open repeat mode (only works for GPT0 & GPT1)
  *  @return
  *	0: Success.\n
  *	negative: Failure.\n
  */
-int mtk_os_hal_gpt_reset_timer(unsigned char timer_id,
+int mtk_os_hal_gpt_reset_timer(enum gpt_num timer_id,
 			       unsigned int count_val,
 			       bool auto_repeat);
 
 /**
  * @brief  Config GPT timer.
- *  @param [in] timer_id: GPT timer id
- *  @param [in] speed_32us: for GPT0, GPT1 & GPT2, it is used to choose
+ *  @param [in] timer_id : GPT timer id
+ *  @param [in] speed_32us : for GPT0, GPT1 & GPT2, it is used to choose
  *	32kHz(= 1) or 1kHz(= 0); for GPT4, it is used to choose bus_clk(= 1)
  *	or half of bus_clk(= 0); and for GPT3, it has no influence.
- *  @param [in] gpt_int: a pointer of struct os_gpt_int to set interrupt
+ *  @param [in] gpt_int : a pointer of struct os_gpt_int to set interrupt
  *	callback (only works for GPT0, GPT1 & GPT3)
  *  @return
  *	0: Success.\n
  *	negative: Failure.\n
  */
-int mtk_os_hal_gpt_config(unsigned char timer_id,
+int mtk_os_hal_gpt_config(enum gpt_num timer_id,
 			  unsigned char speed_32us,
 			  struct os_gpt_int *gpt_int);
 
 /**
- * @brief  Init GPT device.
+ * @brief  Init GPT device.\n
+ *	Internal assurance that it will only be executed only one time
+ * effectively.
  *  @param
  *	None
  *  @return
  *	None
- *  @note
- *	Internal assurance that it will only be executed only one time
- * effectively.
  */
 void mtk_os_hal_gpt_init(void);
 

@@ -1,5 +1,5 @@
 /*
- * (C) 2005-2019 MediaTek Inc. All rights reserved.
+ * (C) 2005-2020 MediaTek Inc. All rights reserved.
  *
  * Copyright Statement:
  *
@@ -33,22 +33,11 @@
  * MEDIATEK SOFTWARE AT ISSUE.
  */
 
-
 #include "hdl_adc.h"
 
 void mtk_hdl_adc_start(void __iomem *base)
 {
-	adc_debug("\tmtk hdl_adc_start\n");
-
-	/* Enable ADC */
-	adc_mod_reg(base, ADC_FSM_EN, ADC_FSM_ENABLE);
-}
-
-void mtk_hdl_adc_start_ch(void __iomem *base, u16 ch_bit_map)
-{
-	adc_debug("\tmtk hdl_adc_start_ch! channel_bit_map == %d\n",
-			ch_bit_map);
-	adc_mod_reg(base, ADC_REG_CH_MAP, ch_bit_map);
+	adc_debug("\tmtk hdl_adc_start.\n");
 
 	/* Enable ADC */
 	adc_mod_reg(base, ADC_FSM_EN, ADC_FSM_ENABLE);
@@ -59,6 +48,7 @@ void mtk_hdl_adc_stop(void __iomem *base)
 	/* Disable ADC */
 	adc_mod_reg(base, ADC_FSM_EN, ADC_FSM_DISABLE);
 }
+
 void mtk_hal_adc_init(void __iomem *base)
 {
 	/* Restore as default values */
@@ -73,6 +63,7 @@ void mtk_hal_adc_init(void __iomem *base)
 	adc_mod_reg(base, ADC_REG_AUXADC_INVERT_PMU_CLK,
 		ADC_INVERT_PMU_CLK_DISABLE);
 	adc_mod_reg(base, ADC_REG_AUXADC_ADC_CLK_SRC, ADC_CLK_SRC_BUCK);
+	adc_mod_reg(base, ADC_REG_AUXADC_ADC_VCM_VREF, ADC_VREF25_SUPPORT);
 }
 
 void mtk_hal_adc_uninit(void __iomem *base)
@@ -105,6 +96,8 @@ void mtk_hdl_adc_fsm_param_set(void __iomem *base,
 	/* Set ADC parameters */
 	adc_mod_reg(base, ADC_PMODE_EN, pmode);
 	adc_mod_reg(base, ADC_REG_AVG_MODE, avg_mode);
+	adc_mod_reg(base, ADC_REG_T_INIT, ADC_INIT_TIME);
+	adc_mod_reg(base, ADC_REG_T_CH, ADC_CH_STABLE_TIME);
 	adc_mod_reg(base, ADC_REG_CH_MAP, channel_map);
 	osai_writel(period, base + ADC_REG_PERIOD_ADDR);
 	adc_mod_reg(base, ADC_REG_ADC_DATA_SYNC_MODE,
@@ -133,28 +126,25 @@ void mtk_hdl_adc_reset(void __iomem *base)
 {
 	u32 value = 0;
 
-	adc_debug("hal_adc_reset\n");
+	adc_debug("hal_adc_reset.\n");
 	value = osai_readl(base);
 	value = value & (~ADC_CR_SW_RST_MASK);
 	osai_writel(value, base);
 	value |= ADC_CR_SW_RST_MASK;
 	osai_writel(value, base);
 }
+
 void mtk_hdl_adc_dma_enable(void __iomem *base)
 {
 	adc_mod_reg(base, ADC_RX_DMA_EN, ADC_RX_DMA_ENABLE);
 	adc_mod_reg(base, ADC_RXFEN, ADC_RX_FULL_DISABLE);
 	adc_mod_reg(base, ADC_RXTIMEFEN, ADC_RX_TIME_OUT_DISABLE);
 }
+
 void mtk_hdl_adc_fifo_rx_full_enable(void __iomem *base)
 {
 	adc_mod_reg(base, ADC_RX_DMA_EN, ADC_RX_DMA_DISABLE);
 	adc_mod_reg(base, ADC_RXFEN, ADC_RX_FULL_ENABLE);
-}
-void mtk_hdl_adc_fifo_rx_timeout_enable(void __iomem *base)
-{
-	adc_mod_reg(base, ADC_RX_DMA_EN, ADC_RX_DMA_DISABLE);
-	adc_mod_reg(base, ADC_RXTIMEFEN, ADC_RX_TIME_OUT_ENABLE);
 }
 
 void mtk_hdl_adc_trigger_level_set(void __iomem *base,
